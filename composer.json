@@ -1,0 +1,27 @@
+{
+    "name": "szokeptr/laravel-horizon-cloudwatch-metrics",
+    "description": "Push queue metrics to AWS Cloudwatch",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Peter Szoke",
+            "email": "szokeptr@gmail.com"
+        }
+    ],
+    "require": {
+        "aws/aws-sdk-php": "^3.137"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "HorizonCW\\HorizonCWServiceProvider"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "HorizonCW\\": "src"
+        }
+    }
+}
