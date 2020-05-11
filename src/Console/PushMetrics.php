@@ -84,8 +84,7 @@ class PushMetrics extends Command
 
     protected function pushMetric($data)
     {
-        info('Pushing', $data);
-        return $this->client->putMetricData([
+        return $this->getClient()->putMetricData([
             'Namespace' => config('horizon-cw.namespace'),
             'MetricData' => $data
         ]);
