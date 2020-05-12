@@ -62,14 +62,14 @@ class PushMetrics extends Command
     {
         return array_map(function($item) use ($metric, $job) {
             $value = $item->{$metric};
-            if ($this->metricUnits[$metric] === 'Second') {
+            if ($this->metricUnits[$metric] === 'Seconds') {
                 $value = $value / 1000;
             }
 
             return [
                 'MetricName' => $metric,
                 'Timestamp' => $item->time,
-                'Value' => $value,
+                'Value' => (float) $value,
                 'Unit' => $this->metricUnits[$metric],
                 'Dimensions' => [
                     [
@@ -84,9 +84,16 @@ class PushMetrics extends Command
 
     protected function pushMetric($data)
     {
-        return $this->getClient()->putMetricData([
-            'Namespace' => config('horizon-cw.namespace'),
-            'MetricData' => $data
-        ]);
+        try {
+            $result = $this->getClient()->putMetricData([
+                'Namespace' => config('horizon-cw.namespace'),
+                'MetricData' => $data
+            ]);
+        } catch (\Exception $e) {
+            $this->error("Failed to push metrics: " . $e->getMessage());
+            return;
+        }
+
+        return $result;
     }
 }

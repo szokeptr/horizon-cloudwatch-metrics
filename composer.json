@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "aws/aws-sdk-php": "^3.137"
+        "aws/aws-sdk-php": "^3.137",
+        "laravel/horizon": "^4.3"
     },
     "extra": {
         "laravel": {
