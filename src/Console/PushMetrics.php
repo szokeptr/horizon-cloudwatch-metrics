@@ -54,6 +54,8 @@ class PushMetrics extends Command
                     continue;
                 }
 
+                $snapshots = collect($snapshots)->sortByDesc('time')->take(20)->values()->all();
+
                 $metricData = $this->mapMetricData($snapshots, $metric, $job);
                 $this->pushMetric($metricData);
 
