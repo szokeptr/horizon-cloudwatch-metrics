@@ -50,6 +50,10 @@ class PushMetrics extends Command
         foreach ($jobs as $job) {
             $snapshots = $metrics->snapshotsForJob($job);
             foreach ($this->publishedMetrics as $metric) {
+                if (count($snapshots) === 0) {
+                    continue;
+                }
+
                 $metricData = $this->mapMetricData($snapshots, $metric, $job);
                 $this->pushMetric($metricData);
 
@@ -75,6 +79,10 @@ class PushMetrics extends Command
                     [
                         'Name' => 'Job',
                         'Value' => $job,
+                    ],
+                    [
+                        'Name' => 'Environment',
+                        'Value' => config('app.env'),
                     ]
                 ]
             ];
