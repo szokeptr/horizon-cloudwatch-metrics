@@ -56,17 +56,44 @@ class PushMetrics extends Command
 
                 $snapshots = collect($snapshots)->sortByDesc('time')->take(20)->values()->all();
 
-                $metricData = $this->mapMetricData($snapshots, $metric, $job);
+                $metricData = $this->mapMetricData($snapshots, $metric, [
+                    'Name' => 'Job',
+                    'Value' => $job
+                ]);
+
                 $this->pushMetric($metricData);
 
                 $this->info("$metric metrics for $job were pushed to CloudWatch");
             }
         }
+
+        $queues = $metrics->measuredQueues();
+
+        foreach ($queues as $queue) {
+            $snapshots = $metrics->snapshotsForQueue($queue);
+
+            foreach ($this->publishedMetrics as $metric) {
+                if (count($snapshots) === 0) {
+                    continue;
+                }
+
+                $snapshots = collect($snapshots)->sortByDesc('time')->take(20)->values()->all();
+
+                $metricData = $this->mapMetricData($snapshots, $metric, [
+                    'Name' => 'Queue',
+                    'Value' => $queue,
+                ]);
+
+                $this->pushMetric($metricData);
+
+                $this->info("$metric metrics for $queue were pushed to CloudWatch");
+            }
+        }
     }
 
-    protected function mapMetricData($data, $metric, $job)
+    protected function mapMetricData($data, $metric, ...$dimensions)
     {
-        return array_map(function($item) use ($metric, $job) {
+        return array_map(function($item) use ($metric, $dimensions) {
             $value = $item->{$metric};
             if ($this->metricUnits[$metric] === 'Seconds') {
                 $value = $value / 1000;
@@ -77,16 +104,12 @@ class PushMetrics extends Command
                 'Timestamp' => $item->time,
                 'Value' => (float) $value,
                 'Unit' => $this->metricUnits[$metric],
-                'Dimensions' => [
-                    [
-                        'Name' => 'Job',
-                        'Value' => $job,
-                    ],
+                'Dimensions' => array_merge($dimensions, [
                     [
                         'Name' => 'Environment',
                         'Value' => config('app.env'),
                     ]
-                ]
+                ])
             ];
 
         }, $data);
