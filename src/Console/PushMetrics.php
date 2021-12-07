@@ -25,14 +25,21 @@ class PushMetrics extends Command
      */
     protected $description = 'Store a snapshot of the queue metrics';
 
-    protected $publishedMetrics = [
+    protected $jobMetrics = [
         'throughput',
         'runtime',
+    ];
+
+    protected $queueMetrics = [
+        'throughput',
+        'runtime',
+        'wait',
     ];
 
     protected $metricUnits = [
         'throughput' => 'Count',
         'runtime' => 'Milliseconds',
+        'wait' => 'Seconds',
     ];
 
     /**
@@ -49,7 +56,7 @@ class PushMetrics extends Command
 
         foreach ($jobs as $job) {
             $snapshots = $metrics->snapshotsForJob($job);
-            foreach ($this->publishedMetrics as $metric) {
+            foreach ($this->jobMetrics as $metric) {
                 if (count($snapshots) === 0) {
                     continue;
                 }
@@ -72,7 +79,7 @@ class PushMetrics extends Command
         foreach ($queues as $queue) {
             $snapshots = $metrics->snapshotsForQueue($queue);
 
-            foreach ($this->publishedMetrics as $metric) {
+            foreach ($this->queueMetrics as $metric) {
                 if (count($snapshots) === 0) {
                     continue;
                 }
