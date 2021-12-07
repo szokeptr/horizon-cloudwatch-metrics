@@ -32,7 +32,7 @@ class PushMetrics extends Command
 
     protected $metricUnits = [
         'throughput' => 'Count',
-        'runtime' => 'Seconds',
+        'runtime' => 'Milliseconds',
     ];
 
     /**
@@ -95,9 +95,6 @@ class PushMetrics extends Command
     {
         return array_map(function($item) use ($metric, $dimensions) {
             $value = $item->{$metric};
-            if ($this->metricUnits[$metric] === 'Seconds') {
-                $value = $value / 1000;
-            }
 
             return [
                 'MetricName' => $metric,
