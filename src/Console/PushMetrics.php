@@ -2,7 +2,6 @@
 
 namespace HorizonCW\Console;
 
-use Aws\Exception\AwsException;
 use HorizonCW\CloudWatch;
 use Illuminate\Console\Command;
 use Laravel\Horizon\Contracts\MetricsRepository;
