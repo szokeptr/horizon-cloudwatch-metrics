@@ -2,6 +2,7 @@
 
 namespace HorizonCW\Console;
 
+use Aws\Result;
 use HorizonCW\CloudWatch;
 use Illuminate\Console\Command;
 use Laravel\Horizon\Contracts\MetricsRepository;
@@ -95,8 +96,15 @@ class PushMetrics extends Command
         }
     }
 
+    /**
+     * @param \stdClass[] $data 
+     * @param string $metric 
+     * @param array $dimensions 
+     * @return array 
+     */
     protected function mapMetricData($data, $metric, ...$dimensions)
     {
+        /** @param \stdClass $item */
         return array_map(function($item) use ($metric, $dimensions) {
             $value = $item->{$metric};
 
@@ -116,6 +124,10 @@ class PushMetrics extends Command
         }, $data);
     }
 
+    /**
+     * @param array $data 
+     * @return void|Result 
+     */
     protected function pushMetric($data)
     {
         try {
