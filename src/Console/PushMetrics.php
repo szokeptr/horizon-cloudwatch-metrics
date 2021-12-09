@@ -33,13 +33,11 @@ class PushMetrics extends Command
     protected $queueMetrics = [
         'throughput',
         'runtime',
-        'wait',
     ];
 
     protected $metricUnits = [
         'throughput' => 'Count',
         'runtime' => 'Milliseconds',
-        'wait' => 'Seconds',
     ];
 
     /**
