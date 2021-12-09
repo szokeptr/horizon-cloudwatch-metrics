@@ -26,5 +26,10 @@
         "psr-4": {
             "HorizonCW\\": "src"
         }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
+        ]
     }
 }
