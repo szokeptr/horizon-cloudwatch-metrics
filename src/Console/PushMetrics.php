@@ -2,7 +2,7 @@
 
 namespace HorizonCW\Console;
 
-use Aws\Exception\AwsException;
+use Aws\Result;
 use HorizonCW\CloudWatch;
 use Illuminate\Console\Command;
 use Laravel\Horizon\Contracts\MetricsRepository;
@@ -25,14 +25,19 @@ class PushMetrics extends Command
      */
     protected $description = 'Store a snapshot of the queue metrics';
 
-    protected $publishedMetrics = [
+    protected $jobMetrics = [
+        'throughput',
+        'runtime',
+    ];
+
+    protected $queueMetrics = [
         'throughput',
         'runtime',
     ];
 
     protected $metricUnits = [
         'throughput' => 'Count',
-        'runtime' => 'Seconds',
+        'runtime' => 'Milliseconds',
     ];
 
     /**
@@ -49,49 +54,80 @@ class PushMetrics extends Command
 
         foreach ($jobs as $job) {
             $snapshots = $metrics->snapshotsForJob($job);
-            foreach ($this->publishedMetrics as $metric) {
+            foreach ($this->jobMetrics as $metric) {
                 if (count($snapshots) === 0) {
                     continue;
                 }
 
                 $snapshots = collect($snapshots)->sortByDesc('time')->take(20)->values()->all();
 
-                $metricData = $this->mapMetricData($snapshots, $metric, $job);
+                $metricData = $this->mapMetricData($snapshots, $metric, [
+                    'Name' => 'Job',
+                    'Value' => $job
+                ]);
+
                 $this->pushMetric($metricData);
 
                 $this->info("$metric metrics for $job were pushed to CloudWatch");
             }
         }
+
+        $queues = $metrics->measuredQueues();
+
+        foreach ($queues as $queue) {
+            $snapshots = $metrics->snapshotsForQueue($queue);
+
+            foreach ($this->queueMetrics as $metric) {
+                if (count($snapshots) === 0) {
+                    continue;
+                }
+
+                $snapshots = collect($snapshots)->sortByDesc('time')->take(20)->values()->all();
+
+                $metricData = $this->mapMetricData($snapshots, $metric, [
+                    'Name' => 'Queue',
+                    'Value' => $queue,
+                ]);
+
+                $this->pushMetric($metricData);
+
+                $this->info("$metric metrics for $queue were pushed to CloudWatch");
+            }
+        }
     }
 
-    protected function mapMetricData($data, $metric, $job)
+    /**
+     * @param \stdClass[] $data 
+     * @param string $metric 
+     * @param array $dimensions 
+     * @return array 
+     */
+    protected function mapMetricData($data, $metric, ...$dimensions)
     {
-        return array_map(function($item) use ($metric, $job) {
+        /** @param \stdClass $item */
+        return array_map(function($item) use ($metric, $dimensions) {
             $value = $item->{$metric};
-            if ($this->metricUnits[$metric] === 'Seconds') {
-                $value = $value / 1000;
-            }
 
             return [
                 'MetricName' => $metric,
                 'Timestamp' => $item->time,
                 'Value' => (float) $value,
                 'Unit' => $this->metricUnits[$metric],
-                'Dimensions' => [
-                    [
-                        'Name' => 'Job',
-                        'Value' => $job,
-                    ],
+                'Dimensions' => array_merge($dimensions, [
                     [
                         'Name' => 'Environment',
                         'Value' => config('app.env'),
                     ]
-                ]
+                ])
             ];
 
         }, $data);
     }
 
+    /**
+     * @param array $data 
+     * @return void|Result 
+     */
     protected function pushMetric($data)
     {
         try {
